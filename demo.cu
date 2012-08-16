@@ -2,8 +2,21 @@
 #include <iostream>
 #include <thrust/device_vector.h>
 #include "time_invocation_cuda.hpp"
+#include <strange/cyclic_range.hpp>
+#include <strange/strided_range.hpp>
 
 using strange::range;
+using strange::slice;
+
+template<typename Range1, typename Range2>
+__device__ void serial_copy(Range1 src, Range2 dst)
+{
+  int i = 0;
+  for(; i < src.size(); ++i)
+  {
+    dst[i] = src[i];
+  }
+}
 
 template<typename Range1, typename Range2>
 __device__ void grid_convergent_copy(Range1 src, Range2 dst)
@@ -11,10 +24,15 @@ __device__ void grid_convergent_copy(Range1 src, Range2 dst)
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   int grid_size = gridDim.x * blockDim.x;
 
-  for(; i < src.size(); i += grid_size)
-  {
-    dst[i] = src[i];
-  }
+//  for(; i < src.size(); i += grid_size)
+//  {
+//    dst[i] = src[i];
+//  }
+
+  strange::strided_range<typename Range1::iterator> strided_src(slice(src, i), grid_size);
+  strange::strided_range<typename Range2::iterator> strided_dst(slice(dst, i), grid_size);
+
+  serial_copy(src, dst);
 }
 
 __global__ void my_copy_kernel(const int *first, int n, int *result)

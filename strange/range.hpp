@@ -215,6 +215,22 @@ range<typename range_iterator<const Range>::type> make_range(const Range &rng)
 template<typename Range, typename Size>
 __host__ __device__
 range<typename range_iterator<Range>::type>
+  slice(Range &rng, Size first)
+{
+  return make_range(begin(rng) + first, end(rng));
+}
+
+template<typename Range, typename Size>
+__host__ __device__
+range<typename range_iterator<const Range>::type>
+  slice(const Range &rng, Size first)
+{
+  return make_range(begin(rng) + first, end(rng));
+}
+
+template<typename Range, typename Size>
+__host__ __device__
+range<typename range_iterator<Range>::type>
   slice(Range &rng, Size first, Size last)
 {
   return make_range(begin(rng) + first, begin(rng) + last);
