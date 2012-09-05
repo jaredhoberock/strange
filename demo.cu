@@ -62,8 +62,7 @@ void cuda_memcpy(const int *first, int n, int *result)
 int main()
 {
   size_t n = 8 << 20;
-  //size_t num_trials = 100;
-  size_t num_trials = 1;
+  size_t num_trials = 100;
   thrust::device_vector<int> src(n), dst(n);
 
   size_t num_bytes = 2 * sizeof(int) * n;
