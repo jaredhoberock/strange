@@ -5,17 +5,17 @@
 #include "time_invocation_cuda.hpp"
 #include <strange/strided_range.hpp>
 #include <cassert>
+#include <cstdio>
 
 using strange::range;
 using strange::slice;
 
 template<typename Range1, typename Range2>
-__device__ void serial_copy(Range1 src, Range2 dst)
+inline __device__ void serial_copy(Range1 src, Range2 dst)
 {
-  int i = 0;
-  for(; i < src.size(); ++i)
+  for(; !src.empty(); src.pop_front(), dst.pop_front())
   {
-    dst[i] = src[i];
+    dst.front() = src.front();
   }
 }
 
@@ -25,15 +25,15 @@ __device__ void grid_convergent_copy(Range1 src, Range2 dst)
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   int grid_size = gridDim.x * blockDim.x;
 
-  for(; i < src.size(); i += grid_size)
-  {
-    dst[i] = src[i];
-  }
+  //for(; i < src.size(); i += grid_size)
+  //{
+  //  dst[i] = src[i];
+  //}
 
-//  strange::strided_range<typename Range1::iterator> strided_src(slice(src, i), grid_size);
-//  strange::strided_range<typename Range2::iterator> strided_dst(slice(dst, i), grid_size);
-//
-//  serial_copy(strided_src, strided_dst);
+  strange::strided_range<typename Range1::iterator> strided_src(slice(src, i), grid_size);
+  strange::strided_range<typename Range2::iterator> strided_dst(slice(dst, i), grid_size);
+
+  serial_copy(strided_src, strided_dst);
 }
 
 __global__ void my_copy_kernel(const int *first, int n, int *result)
@@ -61,7 +61,8 @@ void cuda_memcpy(const int *first, int n, int *result)
 int main()
 {
   size_t n = 8 << 20;
-  size_t num_trials = 100;
+  //size_t num_trials = 100;
+  size_t num_trials = 1;
   thrust::device_vector<int> src(n), dst(n);
   thrust::sequence(src.begin(), src.end());
 
