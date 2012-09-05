@@ -2,9 +2,7 @@
 #include <iostream>
 #include <thrust/device_vector.h>
 #include "time_invocation_cuda.hpp"
-#include <strange/cyclic_range.hpp>
 #include <strange/strided_range.hpp>
-#include <strange/linear_range.hpp>
 #include <cstdio>
 
 using strange::range;
