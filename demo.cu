@@ -1,9 +1,10 @@
 #include <strange/range.hpp>
 #include <iostream>
 #include <thrust/device_vector.h>
+#include <thrust/sequence.h>
 #include "time_invocation_cuda.hpp"
 #include <strange/strided_range.hpp>
-#include <cstdio>
+#include <cassert>
 
 using strange::range;
 using strange::slice;
@@ -62,12 +63,17 @@ int main()
   size_t n = 8 << 20;
   size_t num_trials = 100;
   thrust::device_vector<int> src(n), dst(n);
+  thrust::sequence(src.begin(), src.end());
 
   size_t num_bytes = 2 * sizeof(int) * n;
   float gigabytes = float(num_bytes) / (1 << 30);
 
   int *first  = thrust::raw_pointer_cast(src.data());
   int *result = thrust::raw_pointer_cast(dst.data());
+
+  // first validate my_copy works
+  my_copy(first, n, result);
+  assert(src == dst);
 
   float cuda_memcpy_msecs = time_invocation_cuda(num_trials, cuda_memcpy, first, n, result);
   float cuda_memcpy_bandwidth = gigabytes / (cuda_memcpy_msecs / 1000);
