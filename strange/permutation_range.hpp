@@ -56,5 +56,3 @@ permutation_range<typename range_iterator<Range1>::type, typename range_iterator
 
 } // end strange
 
-
-

@@ -82,6 +82,12 @@ template<typename Iterator>
       return begin() == end();
     }
 
+    inline __host__ __device__
+    void pop_front()
+    {
+      ++m_begin;
+    }
+
   private:
     iterator m_begin, m_end;
 };
@@ -109,7 +115,7 @@ template<typename Iterator>
     inline __host__ __device__
     iterator end() const
     {
-      return begin() + size();;
+      return begin() + size();
     }
 
     inline __host__ __device__
@@ -121,7 +127,14 @@ template<typename Iterator>
     inline __host__ __device__
     bool empty() const
     {
-      return size() == 0;;
+      return size() == 0;
+    }
+
+    inline __host__ __device__
+    void pop_front()
+    {
+      ++m_begin;
+      --m_size;
     }
 
   private:
@@ -176,6 +189,12 @@ template<typename Iterator>
     range(const Range &rng)
       : super_t(detail::adl_begin(rng), detail::adl_end(rng))
     {}
+
+    inline __host__ __device__
+    reference front() const
+    {
+      return *super_t::begin();
+    }
 
     inline __host__ __device__
     reference operator[](const difference_type &i) const

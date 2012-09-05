@@ -4,6 +4,8 @@
 #include "time_invocation_cuda.hpp"
 #include <strange/cyclic_range.hpp>
 #include <strange/strided_range.hpp>
+#include <strange/linear_range.hpp>
+#include <cstdio>
 
 using strange::range;
 using strange::slice;
@@ -24,15 +26,15 @@ __device__ void grid_convergent_copy(Range1 src, Range2 dst)
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   int grid_size = gridDim.x * blockDim.x;
 
-//  for(; i < src.size(); i += grid_size)
-//  {
-//    dst[i] = src[i];
-//  }
+  for(; i < src.size(); i += grid_size)
+  {
+    dst[i] = src[i];
+  }
 
-  strange::strided_range<typename Range1::iterator> strided_src(slice(src, i), grid_size);
-  strange::strided_range<typename Range2::iterator> strided_dst(slice(dst, i), grid_size);
-
-  serial_copy(src, dst);
+//  strange::strided_range<typename Range1::iterator> strided_src(slice(src, i), grid_size);
+//  strange::strided_range<typename Range2::iterator> strided_dst(slice(dst, i), grid_size);
+//
+//  serial_copy(strided_src, strided_dst);
 }
 
 __global__ void my_copy_kernel(const int *first, int n, int *result)
@@ -60,7 +62,8 @@ void cuda_memcpy(const int *first, int n, int *result)
 int main()
 {
   size_t n = 8 << 20;
-  size_t num_trials = 100;
+  //size_t num_trials = 100;
+  size_t num_trials = 1;
   thrust::device_vector<int> src(n), dst(n);
 
   size_t num_bytes = 2 * sizeof(int) * n;
