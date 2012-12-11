@@ -1,8 +1,7 @@
 #pragma once
 
 #include <strange/range.hpp>
-#include <strange/counting_range.hpp>
-#include <strange/transform_range.hpp>
+#include <strange/tabulated_range.hpp>
 
 namespace strange
 {
@@ -33,8 +32,12 @@ template<typename T>
 template<typename T>
   struct linear_range_base
 {
-  typedef counting_range<T>                                                   counting_rng;
-  typedef transform_range<linear_functor<T>, typename counting_rng::iterator> type;
+  // XXX tabulating linear_function is inefficient because every dereference incurs a multiply
+  //     instead, we should implement it through a novel iterator similar to counting_iterator which
+  //     increments by a instead of 1
+  //     this will make size() incur a divide but this is typically only done once per loop
+  //     alternatively, we could cache the size inside the range and only do the divide when taking the difference of iterators
+  typedef tabulated_range<linear_functor<T>, T> type;
 };
 
 
@@ -50,7 +53,7 @@ template<typename T>
   public:
     inline __host__ __device__
     linear_range(T a, T size)
-      : super_t(make_counting_range<T>(0,size), detail::linear_functor<T>(a))
+      : super_t(T(0), size, detail::linear_functor<T>(a))
     {}
 };
 
