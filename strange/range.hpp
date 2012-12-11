@@ -280,5 +280,5 @@ range<typename range_iterator<const Range>::type>
 }
 
 
-} // end newton
+} // end strange
 
