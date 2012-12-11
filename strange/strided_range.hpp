@@ -44,14 +44,14 @@ template<typename RandomAccessIterator>
     inline __host__ __device__
     strided_range(Range &rng,
                   difference_type stride_size)
-      : super_t(make_permutation_range(rng, make_linear_range(stride_size, detail::divide_ri(rng.size(), stride_size))))
+      : super_t(make_permutation_range(rng, make_linear_range(stride_size, detail::divide_ri(size(rng), stride_size))))
     {}
 
     template<typename Range>
     inline __host__ __device__
     strided_range(const Range &rng,
                   difference_type stride_size)
-      : super_t(make_permutation_range(rng, make_linear_range(stride_size, detail::divide_ri(rng.size(), stride_size))))
+      : super_t(make_permutation_range(rng, make_linear_range(stride_size, detail::divide_ri(size(rng), stride_size))))
     {}
 };
 
