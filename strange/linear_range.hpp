@@ -37,6 +37,8 @@ template<typename T>
   //     increments by a instead of 1
   //     this will make size() incur a divide but this is typically only done once per loop
   //     alternatively, we could cache the size inside the range and only do the divide when taking the difference of iterators
+  //     actually range already does this caching for us. the only place we should need to do the divide is when
+  //     taking the difference of iterators
   typedef tabulated_range<linear_functor<T>, T> type;
 };
 
