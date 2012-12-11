@@ -1,7 +1,6 @@
 #include <strange/cyclic_range.hpp>
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
-#include <vector>
 #include <iostream>
 
 int main()
