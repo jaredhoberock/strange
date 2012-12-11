@@ -88,6 +88,16 @@ template<typename Iterator>
       ++m_begin;
     }
 
+    inline __host__ __device__
+    void pop_front(difference_type n)
+    {
+      while(n)
+      {
+        pop_front();
+        --n;
+      }
+    }
+
   private:
     iterator m_begin, m_end;
 };
@@ -127,7 +137,7 @@ template<typename Iterator>
     inline __host__ __device__
     bool empty() const
     {
-      return size() == 0;
+      return size() <= 0;
     }
 
     inline __host__ __device__
@@ -135,6 +145,13 @@ template<typename Iterator>
     {
       ++m_begin;
       --m_size;
+    }
+
+    inline __host__ __device__
+    void pop_front(difference_type n)
+    {
+      m_begin += n;
+      m_size -= n;
     }
 
   private:
