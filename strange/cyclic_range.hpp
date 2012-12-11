@@ -2,8 +2,7 @@
 
 #include <strange/range.hpp>
 #include <thrust/functional.h>
-#include <strange/counting_range.hpp>
-#include <strange/transform_range.hpp>
+#include <strange/tabulated_range.hpp>
 #include <strange/permutation_range.hpp>
 
 namespace strange
@@ -11,23 +10,22 @@ namespace strange
 namespace detail
 {
 
+
 template<typename Integral>
-  struct reindex_functor
+  struct modulus_functor
     : thrust::unary_function<Integral,Integral>
 {
-  Integral stride_size;
-  Integral range_size;
+  Integral denominator;
 
   inline __host__ __device__
-  reindex_functor(Integral stride_size, Integral range_size)
-    : stride_size(stride_size),
-      range_size(range_size)
+  modulus_functor(Integral denominator)
+    : denominator(denominator)
   {}
 
   inline __host__ __device__
   Integral operator()(Integral i) const
   {
-    return (i * stride_size) % range_size;
+    return i % denominator;
   }
 };
 
@@ -35,10 +33,9 @@ template<typename Integral>
 template<typename RandomAccessIterator>
   struct cyclic_range_base
 {
-  typedef typename thrust::iterator_difference<RandomAccessIterator>::type                   difference_type;
-  typedef counting_range<difference_type>                                                    counting_rng;
-  typedef transform_range<reindex_functor<difference_type>, typename counting_rng::iterator> transform_rng;
-  typedef permutation_range<RandomAccessIterator, typename transform_rng::iterator>          type;
+  typedef typename thrust::iterator_difference<RandomAccessIterator>::type          index_type;
+  typedef tabulated_range<modulus_functor<index_type>, index_type>                  tabulated_rng;
+  typedef permutation_range<RandomAccessIterator, typename tabulated_rng::iterator> type;
 };
 
 
@@ -49,41 +46,33 @@ template<typename RandomAccessIterator>
   class cyclic_range
     : public detail::cyclic_range_base<RandomAccessIterator>::type
 {
-  typedef typename detail::cyclic_range_base<RandomAccessIterator>::type super_t;
+  typedef typename detail::cyclic_range_base<RandomAccessIterator>::type   super_t;
+  typedef typename thrust::iterator_difference<RandomAccessIterator>::type index_type;
 
   public:
     typedef typename super_t::difference_type difference_type;
 
     template<typename Range>
     inline __host__ __device__
-    cyclic_range(Range &rng,
-                 difference_type cycle_size)
-      : super_t(
-          make_permutation_range(
-            rng,
-            make_transform_range(
-              make_counting_range(rng.size()),
-              detail::reindex_functor<difference_type>(cycle_size, rng.size())
-            )
-          )
-        )
+    cyclic_range(Range &rng, difference_type n)
+      : super_t(rng, make_tabulated_range<index_type>(0, n, detail::modulus_functor<index_type>(size(rng))))
     {}
 };
 
 
 template<typename Range>
 inline __host__ __device__
-cyclic_range<typename range_iterator<Range>::type> make_cyclic_range(Range &rng, typename range_difference<Range>::type cycle_size)
+cyclic_range<typename range_iterator<Range>::type> make_cyclic_range(Range &rng, typename range_difference<Range>::type n)
 {
-  return cyclic_range<typename range_iterator<Range>::type>(rng, cycle_size);
+  return cyclic_range<typename range_iterator<Range>::type>(rng, n);
 }
 
 
 template<typename Range>
 inline __host__ __device__
-cyclic_range<typename range_iterator<const Range>::type> make_cyclic_range(Range &rng, typename range_difference<Range>::type cycle_size)
+cyclic_range<typename range_iterator<const Range>::type> make_cyclic_range(const Range &rng, typename range_difference<Range>::type n)
 {
-  return cyclic_range<typename range_iterator<const Range>::type>(rng, cycle_size);
+  return cyclic_range<typename range_iterator<const Range>::type>(rng, n);
 }
 
 
