@@ -65,7 +65,7 @@ __global__ void my_copy_kernel(const int *first, int n, int *result, int num_ful
 void my_copy(const int *first, int n, int *result)
 {
   int block_size = 256;
-  int num_blocks = 16;
+  int num_blocks = 16 * 4;
 
   // num_full_strides is essentially work_per_thread
   int num_full_strides = n / (num_blocks * block_size);
