@@ -11,7 +11,7 @@ using strange::range;
 using strange::slice;
 
 template<typename Range1, typename Range2>
-inline __device__ void serial_copy(Range1 src, Range2 dst)
+inline __device__ void sequential_copy(Range1 src, Range2 dst)
 {
   for(; !src.empty(); src.pop_front(), dst.pop_front())
   {
@@ -20,37 +20,57 @@ inline __device__ void serial_copy(Range1 src, Range2 dst)
 }
 
 template<typename Range1, typename Range2>
-__device__ void grid_convergent_copy(Range1 src, Range2 dst)
+inline __device__ void strided_copy(Range1 src, Range2 dst, int stride, int num_strides)
 {
-  int i = blockDim.x * blockIdx.x + threadIdx.x;
-  int grid_size = gridDim.x * blockDim.x;
-
-  //for(; i < src.size(); i += grid_size)
-  //{
-  //  dst[i] = src[i];
-  //}
-
-  strange::strided_range<typename Range1::iterator> strided_src(slice(src, i), grid_size);
-  strange::strided_range<typename Range2::iterator> strided_dst(slice(dst, i), grid_size);
-
-  serial_copy(strided_src, strided_dst);
+  // XXX we repeat ourself with make_strided_range
+  //     we might be able to save some registers if we did
+  // sequential_for_each(make_strided_range(zip(src,dst), stride, num_strides), assign_functor)
+  // for_each(seq, strided(zip(src,dst), stride, num_strides), assign_functor)
+  sequential_copy(strange::make_strided_range(src, stride, num_strides),
+                  strange::make_strided_range(dst, stride, num_strides));
 }
 
-__global__ void my_copy_kernel(const int *first, int n, int *result)
+// XXX maximizing num_full_strides seems like a good idea to keep the per thread overhead low
+template<typename Range1, typename Range2>
+__device__ void grid_convergent_copy(Range1 src, Range2 dst, int num_full_strides)
+{
+  int i = blockDim.x * blockIdx.x + threadIdx.x;
+  int stride = gridDim.x * blockDim.x;
+
+  // drop the first i items
+  // XXX these drops are faster than using pop_front for some reason on the macbook
+  src = drop(src, i);
+  dst = drop(dst, i);
+  strided_copy(src, dst, stride, num_full_strides);
+
+  // get the remainder
+  // drop everything but the remaining partial strides
+  src.pop_front(num_full_strides * stride);
+  dst.pop_front(num_full_strides * stride);
+
+  for(; !src.empty(); src.pop_front(stride), dst.pop_front(stride))
+  {
+    dst.front() = src.front();
+  }
+}
+
+__global__ void my_copy_kernel(const int *first, int n, int *result, int num_full_strides)
 {
   range<const int*> input(first, first + n);
   range<int *>      output(result, result + n);
 
-  grid_convergent_copy(input, output);
+  grid_convergent_copy(input, output, num_full_strides);
 }
 
 void my_copy(const int *first, int n, int *result)
 {
   int block_size = 256;
-  int num_blocks = n / block_size;
-  if(num_blocks % block_size) ++num_blocks;
+  int num_blocks = 16;
 
-  my_copy_kernel<<<num_blocks,block_size>>>(first, n, result);
+  // num_full_strides is essentially work_per_thread
+  int num_full_strides = n / (num_blocks * block_size);
+
+  my_copy_kernel<<<num_blocks,block_size>>>(first, n, result, num_full_strides);
 }
 
 void cuda_memcpy(const int *first, int n, int *result)
@@ -62,7 +82,7 @@ int main()
 {
   size_t n = 8 << 20;
   size_t num_trials = 100;
-  thrust::device_vector<int> src(n), dst(n);
+  thrust::device_vector<int> src(n, 7), dst(n, 13);
   thrust::sequence(src.begin(), src.end());
 
   size_t num_bytes = 2 * sizeof(int) * n;

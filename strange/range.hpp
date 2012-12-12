@@ -3,6 +3,7 @@
 #include <thrust/iterator/iterator_traits.h>
 #include <strange/range_traits.hpp>
 #include <strange/detail/begin_end.hpp>
+#include <thrust/detail/minmax.h>
 
 namespace strange
 {
@@ -91,7 +92,7 @@ template<typename Iterator>
     inline __host__ __device__
     void pop_front(difference_type n)
     {
-      while(n)
+      while(n && !empty())
       {
         pop_front();
         --n;
@@ -150,8 +151,9 @@ template<typename Iterator>
     inline __host__ __device__
     void pop_front(difference_type n)
     {
+      n = thrust::min(m_size, n);
       m_begin += n;
-      m_size -= n;
+      m_size  -= n;
     }
 
   private:
@@ -296,6 +298,21 @@ range<typename range_iterator<const Range>::type>
   return slice(rng, Size(0), n);
 }
 
+template<typename Range, typename Size>
+__host__ __device__
+range<typename range_iterator<Range>::type>
+  drop(Range &rng, Size n)
+{
+  return slice(rng, n, size(rng));
+}
+
+template<typename Range, typename Size>
+__host__ __device__
+range<typename range_iterator<const Range>::type>
+  drop(const Range &rng, Size n)
+{
+  return slice(rng, n, size(rng));
+}
 
 } // end strange
 

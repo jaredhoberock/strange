@@ -20,14 +20,6 @@ template<typename RandomAccessIterator>
 };
 
 
-template<typename T>
-inline __host__ __device__
-T divide_ri(T numerator, T denominator)
-{
-  return (numerator + (denominator - 1)) / denominator;
-}
-
-
 } // end detail
 
 
@@ -43,32 +35,34 @@ template<typename RandomAccessIterator>
     template<typename Range>
     inline __host__ __device__
     strided_range(Range &rng,
-                  difference_type stride_size)
-      : super_t(make_permutation_range(rng, make_linear_range(stride_size, detail::divide_ri(size(rng), stride_size))))
+                  difference_type stride_size,
+                  difference_type num_strides)
+      : super_t(make_permutation_range(rng, make_linear_range(stride_size, num_strides)))
     {}
 
     template<typename Range>
     inline __host__ __device__
     strided_range(const Range &rng,
-                  difference_type stride_size)
-      : super_t(make_permutation_range(rng, make_linear_range(stride_size, detail::divide_ri(size(rng), stride_size))))
+                  difference_type stride_size,
+                  difference_type num_strides)
+      : super_t(make_permutation_range(rng, make_linear_range(stride_size, num_strides)))
     {}
 };
 
 
 template<typename Range>
 inline __host__ __device__
-strided_range<typename range_iterator<Range>::type> make_strided_range(Range &rng, typename range_difference<Range>::type stride_size)
+strided_range<typename range_iterator<Range>::type> make_strided_range(Range &rng, typename range_difference<Range>::type stride_size, typename range_difference<Range>::type num_strides)
 {
-  return strided_range<typename range_iterator<Range>::type>(rng, stride_size);
+  return strided_range<typename range_iterator<Range>::type>(rng, stride_size, num_strides);
 }
 
 
 template<typename Range>
 inline __host__ __device__
-strided_range<typename range_iterator<const Range>::type> make_strided_range(Range &rng, typename range_difference<Range>::type stride_size)
+strided_range<typename range_iterator<const Range>::type> make_strided_range(const Range &rng, typename range_difference<const Range>::type stride_size, typename range_difference<const Range>::type num_strides)
 {
-  return strided_range<typename range_iterator<const Range>::type>(rng, stride_size);
+  return strided_range<typename range_iterator<const Range>::type>(rng, stride_size, num_strides);
 }
 
 
