@@ -1,6 +1,7 @@
 #pragma once
 
 #include <thrust/iterator/iterator_traits.h>
+#include <strange/detail/type_traits.hpp>
 #include <strange/range_traits.hpp>
 #include <strange/detail/begin_end.hpp>
 #include <thrust/detail/minmax.h>
@@ -164,13 +165,13 @@ template<typename Iterator>
 
 template<typename Iterator>
   struct range_base
-    : thrust::detail::eval_if<
-        thrust::detail::is_convertible<
+    : eval_if<
+        is_convertible<
           typename thrust::iterator_traversal<Iterator>::type,
           thrust::random_access_traversal_tag
         >::value,
-        thrust::detail::identity_<random_access_range<Iterator> >,
-        thrust::detail::identity_<input_range<Iterator> >
+        identity<random_access_range<Iterator> >,
+        identity<input_range<Iterator> >
       >
 {};
 
