@@ -2,6 +2,7 @@
 
 #include <strange/range.hpp>
 #include <strange/tabulated_range.hpp>
+#include <thrust/functional.h>
 
 namespace strange
 {
