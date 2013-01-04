@@ -1,6 +1,6 @@
 #pragma once
 
-#include <thrust/detail/type_traits.h>
+#include <strange/detail/type_traits.hpp>
 
 namespace strange
 {
@@ -18,7 +18,7 @@ template<typename T>
   template<typename S> static yes_type test(typename S::allocator_type *);
   template<typename S> static no_type  test(...);
   static bool const value = sizeof(test<T>(0)) == sizeof(yes_type);
-  typedef thrust::detail::integral_constant<bool, value> type;
+  typedef integral_constant<bool, value> type;
 }; // end has_allocator_type
 
   
@@ -33,7 +33,7 @@ template<typename T>
 
 template<typename T, typename Result = void>
   struct enable_if_container
-    : thrust::detail::enable_if<
+    : enable_if<
         is_container<T>::value,
         Result
       >
@@ -42,7 +42,7 @@ template<typename T, typename Result = void>
 
 template<typename T, typename Result>
   struct lazy_enable_if_container
-    : thrust::detail::lazy_enable_if<
+    : lazy_enable_if<
         is_container<T>::value,
         Result
       >
@@ -51,7 +51,7 @@ template<typename T, typename Result>
 
 template<typename T, typename Result = void>
   struct disable_if_container
-    : thrust::detail::disable_if<
+    : disable_if<
         is_container<T>::value,
         Result
       >
@@ -60,7 +60,7 @@ template<typename T, typename Result = void>
 
 template<typename T, typename Result>
   struct lazy_disable_if_container
-    : thrust::detail::lazy_disable_if<
+    : lazy_disable_if<
         is_container<T>::value,
         Result
       >
