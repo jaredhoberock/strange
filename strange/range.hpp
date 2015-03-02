@@ -304,7 +304,7 @@ __host__ __device__
 range<typename range_iterator<Range>::type>
   drop(Range &rng, Size n)
 {
-  return slice(rng, n, size(rng));
+  return slice(rng, n, Size(size(rng)));
 }
 
 template<typename Range, typename Size>
